@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Stradisymphony
+Name[en]=Stradisymphony
+Comment=Dark theme matching the Omarchy Stradisymphony palette
+Comment[en]=Dark theme matching the Omarchy Stradisymphony palette
+Icon=theme.png
+Type=Service
+X-Falkon-Type=Theme
+X-Falkon-Author=Gabriel
+X-Falkon-License=GPLv3

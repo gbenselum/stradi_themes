@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <defs>
+    <style type="text/css">
+      .ColorScheme-Text { color:#b0b4b8; }
+    </style>
+  </defs>
+  <path style="fill:currentColor;fill-opacity:1;stroke:none"
+      d="M 5 2 L 5 3 L 3 3 L 3 4 L 4 4 L 4 13 L 12 13 L 12 4 L 13 4 L 13 3 L 11 3 L 11 2 Z M 6 4 L 6 12 L 8 12 L 8 4 Z M 10 4 L 10 12 L 12 12 L 12 4 Z M 6 1 L 10 1 L 10 2 L 6 2 Z"
+      class="ColorScheme-Text" />
+</svg>
