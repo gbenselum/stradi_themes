@@ -1,0 +1,276 @@
+# Omarchy environment (OMARCHY_PATH + PATH), needed even for non-interactive shells
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+
+# If not running interactively, don't do anything else (leave this above the rc source)
+[[ $- != *i* ]] && return
+
+# All the default Omarchy aliases and functions
+# (don't mess with these directly, just overwrite them here!)
+source "$OMARCHY_PATH/default/bash/rc"
+
+# Add your own exports, aliases, and functions here.
+#
+# Make an alias for invoking commands you use constantly
+# alias p='python'
+
+# Screen recording with webcam: default to the real internal camera
+# (FaceCam 1000X /dev/video14) since auto-detect picks a dead ipu3-imgu node.
+# e.g.: webcam-record --fullscreen
+alias webcam-record='omarchy capture screenrecording --with-webcam --webcam-device=/dev/video14'
+. "$HOME/.cargo/env"
+
+# ──────────────────────────────────────────────────────────────
+# Agnoster theme for Bash (ported from zsh agnoster) — Omarchy theme-aware
+# Backup available at ~/.bashrc.bak and ~/.bashrc.bak-<timestamp>
+# To revert:  cp ~/.bashrc.bak ~/.bashrc && source ~/.bashrc
+# To toggle off temporarily:  agnoster_disable  ( re-enable: agnoster_enable )
+# To reload after `omarchy theme set`:  agnoster_reload_theme && source ~/.bashrc
+# Requires a Powerline/Nerd Font (you have JetBrainsMono Nerd Font ✓)
+# ──────────────────────────────────────────────────────────────
+
+# Disable starship prompt if it was initialized by Omarchy, agnoster will replace it
+if command -v starship &>/dev/null; then
+  :
+fi
+
+# ── Agnoster colors & glyphs ──
+AGNOSTER_SEGMENT_SEPARATOR=''
+AGNOSTER_SEGMENT_SEPARATOR_LIGHT=''
+AGNOSTER_GIT_BRANCH=''
+
+# ── Omarchy theme integration ──
+# Parse current Omarchy colors.toml (24-bit truecolor) so prompt matches theme
+_agnoster_theme_file=""
+_agnoster_detect_theme() {
+  local cand
+  # Try omarchy current theme name -> ~/.config/omarchy/themes/<name>/colors.toml
+  if command -v omarchy &>/dev/null; then
+    local th
+    th="$(omarchy theme current 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr -d ' ' | tr -d '\n')"
+    [[ -n "$th" ]] && cand="$HOME/.config/omarchy/themes/${th}/colors.toml" && [[ -f "$cand" ]] && { _agnoster_theme_file="$cand"; return; }
+  fi
+  for cand in "$HOME/.config/omarchy/themes/stradisymphony/colors.toml" "$HOME/.config/omarchy/current/theme/colors.toml" /usr/share/omarchy/themes/tokyo-night/colors.toml; do
+    [[ -f "$cand" ]] && { _agnoster_theme_file="$cand"; return; }
+  done
+  # fallback: most recent colors.toml under ~/.config/omarchy/themes
+  cand="$(ls -t "$HOME"/.config/omarchy/themes/*/colors.toml 2>/dev/null | head -1)"
+  [[ -n "$cand" && -f "$cand" ]] && _agnoster_theme_file="$cand"
+}
+_agnoster_detect_theme
+
+_agnoster_get() {  # $1 = key
+  [[ -z "${_agnoster_theme_file:-}" || ! -f "$_agnoster_theme_file" ]] && return
+  grep -E "^$1\s*=" "$_agnoster_theme_file" 2>/dev/null | sed -E 's/.*"(#[0-9a-fA-F]+)".*/\1/' | head -1
+}
+
+THEME_MODE="$(_agnoster_get mode 2>/dev/null || echo)"; [[ "$THEME_MODE" != "light" && "$THEME_MODE" != "dark" ]] && THEME_MODE="$(grep -E '^mode\s*=' "${_agnoster_theme_file:-/dev/null}" 2>/dev/null | sed -E 's/.*"([^"]+)".*/\1/' | head -1)"; [[ -z "$THEME_MODE" ]] && THEME_MODE="dark"
+THEME_BG="$(_agnoster_get background)";              [[ -z "$THEME_BG" ]] && THEME_BG="#1a1b26"
+THEME_FG="$(_agnoster_get foreground)";              [[ -z "$THEME_FG" ]] && THEME_FG="#a9b1d6"
+THEME_BRIGHT_FG="$(_agnoster_get bright_foreground)"; [[ -z "$THEME_BRIGHT_FG" ]] && THEME_BRIGHT_FG="$THEME_FG"
+THEME_LIGHTER_BG="$(_agnoster_get lighter_background)"; [[ -z "$THEME_LIGHTER_BG" ]] && THEME_LIGHTER_BG="$THEME_BG"
+THEME_RED="$(_agnoster_get red)";                    [[ -z "$THEME_RED" ]] && THEME_RED="#f7768e"
+THEME_GREEN="$(_agnoster_get green)";                [[ -z "$THEME_GREEN" ]] && THEME_GREEN="#9ece6a"
+THEME_YELLOW="$(_agnoster_get yellow)";              [[ -z "$THEME_YELLOW" ]] && THEME_YELLOW="#e0af68"
+THEME_BLUE="$(_agnoster_get blue)";                  [[ -z "$THEME_BLUE" ]] && THEME_BLUE="#7aa2f7"
+THEME_MAGENTA="$(_agnoster_get magenta)";            [[ -z "$THEME_MAGENTA" ]] && THEME_MAGENTA="#ad8ee6"
+THEME_CYAN="$(_agnoster_get cyan)";                  [[ -z "$THEME_CYAN" ]] && THEME_CYAN="#449dab"
+THEME_ACCENT="$(_agnoster_get accent)";              [[ -z "$THEME_ACCENT" ]] && THEME_ACCENT="$THEME_BLUE"
+
+# Agnoster palette derived from theme — adapts to light/dark
+if [[ "$THEME_MODE" == "light" ]]; then
+  AGNOSTER_DIR_BG="$THEME_BLUE"
+  AGNOSTER_DIR_FG="$THEME_BG"              # light bg on dark blue
+  AGNOSTER_GIT_CLEAN_BG="$THEME_GREEN"
+  AGNOSTER_GIT_DIRTY_BG="$THEME_YELLOW"
+  AGNOSTER_GIT_FG="$THEME_BG"              # light on dark green/yellow
+  AGNOSTER_STATUS_BG="$THEME_RED"
+  AGNOSTER_STATUS_FG="$THEME_BG"
+  AGNOSTER_CONTEXT_BG="$THEME_LIGHTER_BG"
+  AGNOSTER_CONTEXT_FG="$THEME_FG"
+  AGNOSTER_VENV_BG="$THEME_MAGENTA"
+  AGNOSTER_VENV_FG="$THEME_BG"
+  AGNOSTER_PROMPT_OK="$THEME_GREEN"
+  AGNOSTER_PROMPT_ERR="$THEME_RED"
+else
+  AGNOSTER_DIR_BG="$THEME_BLUE"
+  AGNOSTER_DIR_FG="$THEME_BRIGHT_FG"       # light on blue (dark theme needs light fg)
+  AGNOSTER_GIT_CLEAN_BG="$THEME_GREEN"     # light green -> dark fg
+  AGNOSTER_GIT_DIRTY_BG="$THEME_YELLOW"    # light yellow -> dark fg
+  AGNOSTER_GIT_FG="$THEME_BG"              # dark on light
+  AGNOSTER_STATUS_BG="$THEME_RED"
+  AGNOSTER_STATUS_FG="$THEME_BG"           # dark on light red
+  AGNOSTER_CONTEXT_BG="$THEME_LIGHTER_BG"
+  AGNOSTER_CONTEXT_FG="$THEME_FG"
+  AGNOSTER_VENV_BG="$THEME_MAGENTA"
+  AGNOSTER_VENV_FG="$THEME_BG"
+  AGNOSTER_PROMPT_OK="$THEME_GREEN"
+  AGNOSTER_PROMPT_ERR="$THEME_RED"
+fi
+
+agnoster_reload_theme() {
+  _agnoster_detect_theme
+  # re-parse and re-export — then rebuild vars by re-sourcing this block
+  source ~/.bashrc
+  echo "agnoster theme reloaded from ${_agnoster_theme_file:-unknown} (mode=$THEME_MODE)"
+}
+
+# ── Truecolor helpers ──
+# color may be "#RRGGBB" (truecolor) or "N" (256) or "" (default)
+agnoster::color_escape() {
+  local color="$1" type="$2"  # type 38=fg, 48=bg
+  if [[ "$color" == \#* && ${#color} -eq 7 ]]; then
+    local r g b
+    r=$((16#${color:1:2})); g=$((16#${color:3:2})); b=$((16#${color:5:2}))
+    printf '%s;2;%d;%d;%d' "$type" "$r" "$g" "$b"
+  elif [[ -n "$color" ]]; then
+    printf '%s;5;%s' "$type" "$color"
+  else
+    printf '%s' "$((type==38?39:49))"
+  fi
+}
+
+agnoster::segment() {
+  local bg fg text
+  bg="$1"; fg="$2"; text="$3"
+  local bg_esc fg_esc
+  bg_esc="$(agnoster::color_escape "$bg" 48)"
+  fg_esc="$(agnoster::color_escape "$fg" 38)"
+
+  if [[ "${CURRENT_BG:-NONE}" != "NONE" && "$bg" != "$CURRENT_BG" ]]; then
+    local prev_esc
+    prev_esc="$(agnoster::color_escape "$CURRENT_BG" 38)"
+    PS1+="\[$(printf '\e[%s;%sm' "$prev_esc" "$bg_esc")\]${AGNOSTER_SEGMENT_SEPARATOR}\[$(printf '\e[%s;%sm' "$fg_esc" "$bg_esc")\] ${text} "
+  else
+    PS1+="\[$(printf '\e[%s;%sm' "$fg_esc" "$bg_esc")\] ${text} "
+  fi
+  CURRENT_BG="$bg"
+}
+
+agnoster::end() {
+  if [[ -n "${CURRENT_BG:-}" && "$CURRENT_BG" != "NONE" ]]; then
+    local cur_esc
+    cur_esc="$(agnoster::color_escape "$CURRENT_BG" 38)"
+    PS1+="\[$(printf '\e[0m\e[%sm' "$cur_esc")\]${AGNOSTER_SEGMENT_SEPARATOR}\[\e[0m\] "
+  else
+    PS1+="\[\e[0m\] "
+  fi
+  CURRENT_BG="NONE"
+}
+
+# ── Segments ──
+agnoster::status() {
+  local symbols=""
+  [[ $RETVAL -ne 0 ]] && symbols+="✘ $RETVAL"
+  [[ $UID -eq 0 ]] && symbols+=" ⚡"
+  [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+=" ⚙"
+  if [[ -n "$symbols" ]]; then
+    agnoster::segment "$AGNOSTER_STATUS_BG" "$AGNOSTER_STATUS_FG" "$symbols"
+  fi
+}
+
+agnoster::context() {
+  local user
+  user="$(whoami)"
+  if [[ -n "${SSH_CLIENT:-}" || -n "${SSH_TTY:-}" || "$user" == "root" ]]; then
+    if [[ "$user" == "root" ]]; then
+      agnoster::segment "$AGNOSTER_STATUS_BG" "$AGNOSTER_STATUS_FG" " ${user}@\h "
+    else
+      agnoster::segment "$AGNOSTER_CONTEXT_BG" "$AGNOSTER_CONTEXT_FG" " ${user}@\h "
+    fi
+  fi
+}
+
+agnoster::virtualenv() {
+  local venv=""
+  if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+    venv="$(basename "$VIRTUAL_ENV")"
+  elif [[ -n "${CONDA_DEFAULT_ENV:-}" ]]; then
+    venv="$CONDA_DEFAULT_ENV"
+  fi
+  if [[ -n "$venv" ]]; then
+    agnoster::segment "$AGNOSTER_VENV_BG" "$AGNOSTER_VENV_FG" "  ${venv} "
+  fi
+}
+
+agnoster::dir() {
+  local dir
+  dir="${PWD/#$HOME/\~}"
+  if [[ ${#dir} -gt 40 ]]; then
+    dir="…/${dir##*/}"
+    local tmp="${PWD/#$HOME/\~}"
+    IFS='/' read -ra parts <<< "$tmp"
+    if [[ ${#parts[@]} -gt 3 ]]; then
+      dir="…/${parts[-2]}/${parts[-1]}"
+    fi
+  fi
+  agnoster::segment "$AGNOSTER_DIR_BG" "$AGNOSTER_DIR_FG" " ${dir} "
+}
+
+agnoster::git() {
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    return
+  fi
+  local bg fg ref dirty mode
+  ref="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+  [[ -z "$ref" ]] && return
+  dirty=""
+  if ! git diff --quiet --ignore-submodules 2>/dev/null; then dirty="*"; fi
+  if ! git diff --cached --quiet --ignore-submodules 2>/dev/null; then dirty="*"; fi
+  if [[ -n "$(git status --porcelain 2>/dev/null | head -1)" ]]; then dirty="*"; fi
+  if [[ -n "$dirty" ]]; then
+    bg="$AGNOSTER_GIT_DIRTY_BG"; fg="$AGNOSTER_GIT_FG"
+  else
+    bg="$AGNOSTER_GIT_CLEAN_BG"; fg="$AGNOSTER_GIT_FG"
+  fi
+  local ahead behind
+  ahead="$(git rev-list --count @{u}..HEAD 2>/dev/null || echo 0)"
+  behind="$(git rev-list --count HEAD..@{u} 2>/dev/null || echo 0)"
+  mode=""
+  [[ "$ahead" -gt 0 && "$behind" -gt 0 ]] && mode=" ↕"
+  [[ "$ahead" -gt 0 && "$behind" -eq 0 ]] && mode=" ↑"
+  [[ "$behind" -gt 0 && "$ahead" -eq 0 ]] && mode=" ↓"
+  agnoster::segment "$bg" "$fg" " ${AGNOSTER_GIT_BRANCH} ${ref}${dirty}${mode} "
+}
+
+agnoster::build_prompt() {
+  RETVAL=$?
+  CURRENT_BG="NONE"
+  PS1=""
+  agnoster::status
+  agnoster::context
+  agnoster::virtualenv
+  agnoster::dir
+  agnoster::git
+  agnoster::end
+  local ok_esc err_esc
+  ok_esc="$(agnoster::color_escape "$AGNOSTER_PROMPT_OK" 38)"
+  err_esc="$(agnoster::color_escape "$AGNOSTER_PROMPT_ERR" 38)"
+  if [[ $RETVAL -eq 0 ]]; then
+    PS1+="\[$(printf '\e[%sm' "$ok_esc")\]❯\[\e[0m\] "
+  else
+    PS1+="\[$(printf '\e[%sm' "$err_esc")\]❯\[\e[0m\] "
+  fi
+}
+
+# Helpers to toggle
+agnoster_enable()  {
+  if [[ "${PROMPT_COMMAND:-}" != *"agnoster::build_prompt"* ]]; then
+    PROMPT_COMMAND="agnoster::build_prompt${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+  fi
+  echo "agnoster enabled (theme: ${_agnoster_theme_file:-unknown} $THEME_MODE)"
+}
+agnoster_disable() {
+  PROMPT_COMMAND="${PROMPT_COMMAND//agnoster::build_prompt/}"
+  PROMPT_COMMAND="$(echo "$PROMPT_COMMAND" | sed -E 's/^;+//; s/;+$//; s/;;+/;/g; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+  PS1='\u@\h \w \$ '
+  echo "agnoster disabled – restored simple prompt. To fully restore original: cp ~/.bashrc.bak ~/.bashrc && source ~/.bashrc"
+}
+
+# Install as PROMPT_COMMAND (override starship's) — idempotent
+if [[ "${PROMPT_COMMAND:-}" == *"starship"* ]]; then
+  PROMPT_COMMAND="$(echo "$PROMPT_COMMAND" | sed -E 's/[^;]*starship[^;]*;?//g')"
+  PROMPT_COMMAND="$(echo "$PROMPT_COMMAND" | sed -E 's/^;+//; s/;+$//; s/;;+/;/g; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+fi
+if [[ "${PROMPT_COMMAND:-}" != *"agnoster::build_prompt"* ]]; then
+  PROMPT_COMMAND="agnoster::build_prompt${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+fi

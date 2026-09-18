@@ -6,6 +6,7 @@
 #   1. Omarchy theme  "stradisymphony"  -> ~/.config/omarchy/themes/stradisymphony
 #   2. Falkon theme   "stradisymphony"  -> ~/.local/share/falkon/themes/stradisymphony
 #   3. Sets Falkon's active theme      -> ~/.config/falkon/profiles/<active>/settings.ini
+#   4. Bash agnoster  "stradisymphony"  -> ~/.config/stradi/bash/agnoster.sh + append to ~/.bashrc
 #
 # Designed to run with zero interaction. If Falkon is running it is closed
 # first so the settings edit is not overwritten on exit.
@@ -14,6 +15,7 @@
 #   ./install.sh                 # install everything
 #   ./install.sh --omarchy       # only the omarchy theme
 #   ./install.sh --falkon        # only the falkon theme
+#   ./install.sh --bash          # only the bash agnoster theme
 #   ./install.sh --launch        # also relaunch falkon at the end
 #   ./install.sh --skip-apply    # copy files but do NOT run `omarchy theme set`
 #
@@ -23,13 +25,15 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEME_NAME="stradisymphony"
 DO_OMARCHY=1
 DO_FALKON=1
+DO_BASH=1
 DO_LAUNCH=0
 DO_APPLY_OMARCHY=1
 
 for arg in "$@"; do
     case "$arg" in
-        --omarchy) DO_FALKON=0 ;;
-        --falkon) DO_OMARCHY=0 ;;
+        --omarchy) DO_FALKON=0; DO_BASH=0 ;;
+        --falkon) DO_OMARCHY=0; DO_BASH=0 ;;
+        --bash) DO_OMARCHY=0; DO_FALKON=0 ;;
         --launch) DO_LAUNCH=1 ;;
         --skip-apply) DO_APPLY_OMARCHY=0 ;;
         *) echo "Unknown option: $arg" >&2; exit 2 ;;
@@ -144,6 +148,44 @@ if [ "$DO_FALKON" -eq 1 ]; then
         nohup falkon >/dev/null 2>&1 &
     else
         log "falkon installed. You can launch it anytime (theme is saved in settings)."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 3. Bash agnoster theme
+# ---------------------------------------------------------------------------
+if [ "$DO_BASH" -eq 1 ]; then
+    SRC="$REPO_DIR/bash/$THEME_NAME/agnoster.sh"
+    DST_DIR="$HOME/.config/stradi/bash"
+    DST="$DST_DIR/agnoster.sh"
+
+    if [ ! -f "$SRC" ]; then
+        log "bash agnoster source not found: $SRC (skipping bash install)"
+    else
+        mkdir -p "$DST_DIR"
+        cp -a "$SRC" "$DST"
+        log "bash agnoster copied to $DST"
+
+        # Backup ~/.bashrc if no recent backup exists
+        BASHRC="$HOME/.bashrc"
+        if [ -f "$BASHRC" ]; then
+            # Only backup if not already backed up today (avoid spamming)
+            if ! ls "$HOME"/.bashrc.bak-* 1>/dev/null 2>&1; then
+                cp -a "$BASHRC" "$HOME/.bashrc.bak-$(date +%Y%m%d-%H%M%S)"
+                log "backed up $BASHRC"
+            fi
+            SOURCE_LINE='[[ -f "$HOME/.config/stradi/bash/agnoster.sh" ]] && source "$HOME/.config/stradi/bash/agnoster.sh"'
+            if ! grep -qF 'stradi/bash/agnoster.sh' "$BASHRC" 2>/dev/null; then
+                printf '\n# Stradisymphony Bash Agnoster Theme\n%s\n' "$SOURCE_LINE" >> "$BASHRC"
+                log "appended agnoster source to $BASHRC"
+            else
+                log "agnoster source already in $BASHRC"
+            fi
+            log "bash agnoster installed. Run: source ~/.bashrc  (or open new terminal)"
+            log "toggles: agnoster_disable / agnoster_enable / agnoster_reload_theme"
+        else
+            log "no ~/.bashrc found; theme is at $DST, source it manually"
+        fi
     fi
 fi
 

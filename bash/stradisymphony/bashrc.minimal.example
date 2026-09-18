@@ -1,0 +1,11 @@
+# Omarchy environment (OMARCHY_PATH + PATH), needed even for non-interactive shells
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+[[ $- != *i* ]] && return
+source "$OMARCHY_PATH/default/bash/rc"
+# Add your own exports, aliases, and functions here.
+
+# ── Stradisymphony Agnoster Bash Theme ──
+# Option A: source standalone theme file (recommended, keeps bashrc clean)
+[[ -f "$HOME/Projects/stradi_themes/bash/stradisymphony/agnoster.sh" ]] && source "$HOME/Projects/stradi_themes/bash/stradisymphony/agnoster.sh"
+# Option B: if installed via ./install.sh --bash, it is copied to ~/.config/stradi/bash/agnoster.sh:
+# [[ -f "$HOME/.config/stradi/bash/agnoster.sh" ]] && source "$HOME/.config/stradi/bash/agnoster.sh"
