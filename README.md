@@ -124,3 +124,22 @@ source ~/.bashrc
 - The Falkon theme resolves toolbar icons as SVG **fallback** icons (`qproperty-fallbackIcon` only, no `qproperty-themeIcon`). Since `ToolButton::setThemeIcon()` wins over `setFallbackIcon()` when a themed icon exists, never reintroduce `qproperty-themeIcon` if you want the muted icons to stay.
 - Omarchy stock themes live under `/usr/share/omarchy/themes` and are **read-only**; user themes must go in `~/.config/omarchy/themes`.
 - Hidden files (`.aether-managed`) in the Omarchy theme are intentionally not copied.
+
+## Hyprland keybindings (agent setup)
+
+Add to `~/.config/hypr/bindings.lua` (or append via script) to bind **SUPER + A** → opencode:
+
+```lua
+o.bind("SUPER + A", "Opencode", "foot -e /home/gabriel/.local/share/mise/installs/opencode/latest/opencode")
+```
+
+Then reload:
+
+```bash
+hyprctl reload
+```
+
+**Notes:**
+- Uses `foot` (default Omarchy terminal) — change to `alacritty`, `kitty`, or `ghostty` if preferred.
+- Opencode installed via `mise` — adjust path if installed elsewhere (e.g., `opencode` on PATH).
+- The `o` and `hl` globals are available in `bindings.lua` (Omarchy default config loads them).
