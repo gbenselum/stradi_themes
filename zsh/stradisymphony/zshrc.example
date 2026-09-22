@@ -1,0 +1,35 @@
+# Stradisymphony — author zshrc example (with inlined p10k wiring)
+# Wire the Stradisymphony p10k config AFTER the p10k theme.
+
+# Powerlevel10k instant prompt. Must be at the top of ~/.zshrc.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Path
+export PATH="$HOME/Library/Globant/CodingAgent/bin:$HOME/.opencode/bin:$HOME/.local/bin:$HOME/.coda/bin:$HOME/codaenv/.venv/bin:$PATH"
+typeset -U path  # remove duplicates, same as fish path behavior
+
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt hist_ignore_dups      # skip duplicate entries
+setopt hist_ignore_space     # skip commands that start with a space
+setopt share_history         # share history between terminals
+
+# Completion -- rebuild only once per day
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+  compinit -C
+else
+  compinit
+  touch ~/.zcompdump
+fi
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'  # case-insensitive
+
+# Powerlevel10k prompt
+source /opt/homebrew/opt/powerlevel10k/share/powerlevel10k/powerlevel10k.zsh-theme
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+

@@ -1,0 +1,18 @@
+# Stradisymphony Zsh Powerlevel10k Theme — minimal wiring
+#
+# Requires Powerlevel10k itself. Install it one way:
+#   brew install powerlevel10k                          # macOS (Homebrew)
+#   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
+#
+# In ~/.zshrc, load the THEME first, then this config:
+
+# Theme (Homebrew):
+source /opt/homebrew/opt/powerlevel10k/share/powerlevel10k/powerlevel10k.zsh-theme
+# Theme (git clone):
+# source ~/powerlevel10k/powerlevel10k.zsh-theme
+
+# Stradisymphony p10k config — AFTER the theme, otherwise the defaults win:
+# Option A: installed via ./install.sh --zsh (copied to ~/.config/stradi/zsh/p10k.zsh):
+[[ -f "$HOME/.config/stradi/zsh/p10k.zsh" ]] && source "$HOME/.config/stradi/zsh/p10k.zsh"
+# Option B: source straight from the repo:
+# [[ -f "$HOME/Projects/stradi_themes/zsh/stradisymphony/p10k.zsh" ]] && source "$HOME/Projects/stradi_themes/zsh/stradisymphony/p10k.zsh"

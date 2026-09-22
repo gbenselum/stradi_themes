@@ -7,6 +7,7 @@
 #   2. Falkon theme   "stradisymphony"  -> ~/.local/share/falkon/themes/stradisymphony
 #   3. Sets Falkon's active theme      -> ~/.config/falkon/profiles/<active>/settings.ini
 #   4. Bash agnoster  "stradisymphony"  -> ~/.config/stradi/bash/agnoster.sh + append to ~/.bashrc
+#   5. Zsh p10k        "stradisymphony"  -> ~/.config/stradi/zsh/p10k.zsh + append to ~/.zshrc
 #
 # Designed to run with zero interaction. If Falkon is running it is closed
 # first so the settings edit is not overwritten on exit.
@@ -16,6 +17,7 @@
 #   ./install.sh --omarchy       # only the omarchy theme
 #   ./install.sh --falkon        # only the falkon theme
 #   ./install.sh --bash          # only the bash agnoster theme
+#   ./install.sh --zsh           # only the zsh powerlevel10k config
 #   ./install.sh --launch        # also relaunch falkon at the end
 #   ./install.sh --skip-apply    # copy files but do NOT run `omarchy theme set`
 #
@@ -26,14 +28,16 @@ THEME_NAME="stradisymphony"
 DO_OMARCHY=1
 DO_FALKON=1
 DO_BASH=1
+DO_ZSHP10K=1
 DO_LAUNCH=0
 DO_APPLY_OMARCHY=1
 
 for arg in "$@"; do
     case "$arg" in
-        --omarchy) DO_FALKON=0; DO_BASH=0 ;;
-        --falkon) DO_OMARCHY=0; DO_BASH=0 ;;
-        --bash) DO_OMARCHY=0; DO_FALKON=0 ;;
+        --omarchy) DO_FALKON=0; DO_BASH=0; DO_ZSHP10K=0 ;;
+        --falkon) DO_OMARCHY=0; DO_BASH=0; DO_ZSHP10K=0 ;;
+        --bash) DO_OMARCHY=0; DO_FALKON=0; DO_ZSHP10K=0 ;;
+        --zsh) DO_OMARCHY=0; DO_FALKON=0; DO_BASH=0 ;;
         --launch) DO_LAUNCH=1 ;;
         --skip-apply) DO_APPLY_OMARCHY=0 ;;
         *) echo "Unknown option: $arg" >&2; exit 2 ;;
@@ -185,6 +189,43 @@ if [ "$DO_BASH" -eq 1 ]; then
             log "toggles: agnoster_disable / agnoster_enable / agnoster_reload_theme"
         else
             log "no ~/.bashrc found; theme is at $DST, source it manually"
+        fi
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Zsh Powerlevel10k theme
+# ---------------------------------------------------------------------------
+if [ "$DO_ZSHP10K" -eq 1 ]; then
+    SRC="$REPO_DIR/zsh/$THEME_NAME/p10k.zsh"
+    DST_DIR="$HOME/.config/stradi/zsh"
+    DST="$DST_DIR/p10k.zsh"
+    ZSHRC="$HOME/.zshrc"
+
+    if [ ! -f "$SRC" ]; then
+        log "zsh p10k source not found: $SRC (skipping zsh install)"
+    else
+        mkdir -p "$DST_DIR"
+        cp -a "$SRC" "$DST"
+        log "zsh p10k config copied to $DST"
+
+        if [ -f "$ZSHRC" ]; then
+            # Only backup if not already backed up (avoid spamming)
+            if ! ls "$HOME"/.p10k.zsh.bak-* 1>/dev/null 2>&1 && [ -f "$HOME/.p10k.zsh" ]; then
+                cp -a "$HOME/.p10k.zsh" "$HOME/.p10k.zsh.bak-$(date +%Y%m%d-%H%M%S)"
+                log "backed up $HOME/.p10k.zsh"
+            fi
+            SOURCE_LINE='[[ -f "$HOME/.config/stradi/zsh/p10k.zsh" ]] && source "$HOME/.config/stradi/zsh/p10k.zsh"'
+            if ! grep -qF 'stradi/zsh/p10k.zsh' "$ZSHRC" 2>/dev/null; then
+                printf '\n# Stradisymphony Zsh Powerlevel10k Theme\n%s\n' "$SOURCE_LINE" >> "$ZSHRC"
+                log "appended p10k config source to $ZSHRC"
+            else
+                log "p10k config source already in $ZSHRC"
+            fi
+            log "zsh p10k installed. Run: exec zsh  (or open new terminal)"
+            log "note: Powerlevel10k itself must be installed and its theme sourced BEFORE this config in ~/.zshrc"
+        else
+            log "no ~/.zshrc found; config is at $DST, source it after the p10k theme manually"
         fi
     fi
 fi

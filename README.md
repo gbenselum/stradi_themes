@@ -1,6 +1,6 @@
 # Stradi Themes
 
-Dark **Stradisymphony** theme collection for [Omarchy](https://omarchy.org/), the [Falkon](https://www.falkon.org/) browser, and **Bash** (agnoster prompt).
+Dark **Stradisymphony** theme collection for [Omarchy](https://omarchy.org/), the [Falkon](https://www.falkon.org/) browser, **Bash** (agnoster prompt), and **Zsh** (Powerlevel10k config).
 
 | What | Where it lands |
 |------|----------------|
@@ -8,6 +8,7 @@ Dark **Stradisymphony** theme collection for [Omarchy](https://omarchy.org/), th
 | Falkon theme | `~/.local/share/falkon/themes/stradisymphony/` |
 | Falkon active theme setting | `activeTheme` under `[Themes]` in `~/.config/falkon/profiles/<profile>/settings.ini` |
 | Bash agnoster theme | `~/.config/stradi/bash/agnoster.sh` → sourced from `~/.bashrc` |
+| Zsh Powerlevel10k config | `~/.config/stradi/zsh/p10k.zsh` → sourced from `~/.zshrc` |
 
 Palette:
 
@@ -39,6 +40,11 @@ Palette:
         ├── agnoster.sh              Omarchy colors.toml-aware), bashrc.example
         ├── bashrc.example
         └── bashrc.minimal.example
+└── zsh/
+    └── stradisymphony/            # Zsh Powerlevel10k theme: p10k.zsh (config),
+        ├── p10k.zsh                 zshrc.example, zshrc.minimal.example
+        ├── zshrc.example
+        └── zshrc.minimal.example
 ```
 
 ## Agent / unattended install
@@ -57,6 +63,7 @@ cd stradi_themes
 2. **Falkon theme** – copies the QSS theme into `~/.local/share/falkon/themes/`.
 3. **Falkon active theme** – if a Falkon instance is running it is closed first (otherwise it would overwrite the setting on exit), then `activeTheme=stradisymphony` is written under `[Themes]` in the profile's `settings.ini` (the active profile is read from `profiles.ini`, defaulting to `default`).
 4. **Bash agnoster theme** – copies `bash/stradisymphony/agnoster.sh` → `~/.config/stradi/bash/agnoster.sh`, backs up `~/.bashrc` and appends `source ~/.config/stradi/bash/agnoster.sh` (disables `starship` prompt, requires Powerline/Nerd Font).
+5. **Zsh Powerlevel10k config** – copies `zsh/stradisymphony/p10k.zsh` → `~/.config/stradi/zsh/p10k.zsh`, backs up `~/.p10k.zsh` and appends `source ~/.config/stradi/zsh/p10k.zsh` to `~/.zshrc` (requires the p10k theme itself, sourced earlier in `~/.zshrc`).
 
 Options:
 
@@ -66,6 +73,7 @@ Options:
 ./install.sh --omarchy    # only the Omarchy theme
 ./install.sh --falkon     # only the Falkon theme
 ./install.sh --bash       # only the Bash agnoster theme
+./install.sh --zsh        # only the Zsh Powerlevel10k config
 ./install.sh --skip-apply # copy files but do not run `omarchy theme set`
 ```
 
@@ -111,12 +119,28 @@ source ~/.bashrc
 # toggles: agnoster_disable / agnoster_enable / agnoster_reload_theme
 ```
 
+**Zsh Powerlevel10k config:**
+
+```bash
+mkdir -p ~/.config/stradi/zsh
+cp zsh/stradisymphony/p10k.zsh ~/.config/stradi/zsh/p10k.zsh
+# install Powerlevel10k once: brew install powerlevel10k
+# backup and append to zshrc (theme must load BEFORE this config)
+cp ~/.p10k.zsh ~/.p10k.zsh.bak-$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
+grep -q "stradi/zsh/p10k.zsh" ~/.zshrc || {
+  echo 'source /opt/homebrew/opt/powerlevel10k/share/powerlevel10k/powerlevel10k.zsh-theme' >> ~/.zshrc
+  echo '[[ -f "$HOME/.config/stradi/zsh/p10k.zsh" ]] && source "$HOME/.config/stradi/zsh/p10k.zsh"' >> ~/.zshrc
+}
+exec zsh
+```
+
 ## Verification
 
 - `omarchy theme current` → `Stradisymphony`
 - `~/.local/share/falkon/themes/stradisymphony/main.css` exists
 - Profile `settings.ini` contains `[Themes]` → `activeTheme=stradisymphony`
 - Falkon UI: near-black chrome (`#020202`) with `#8171b3` accent, muted monochrome toolbar icons
+- `~/.config/stradi/zsh/p10k.zsh` exists and `~/.zshrc` sources it after the p10k theme
 
 ## Notes for agents
 
