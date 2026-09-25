@@ -1,0 +1,8 @@
+{
+  "cli_default_open_behavior": "existing_window",
+  "base_keymap": "Zed",
+  "theme": "StradiSymphony",
+  "project_panel": {
+    "dock": "left"
+  }
+}
